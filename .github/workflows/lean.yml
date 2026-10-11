@@ -1,0 +1,31 @@
+name: FFBBP finite Lean research
+on:
+  push:
+    branches: [main, "research/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: true
+          build-args: FFBBPLean
+          test: false
+          lint: false
+          use-mathlib-cache: true
+          use-github-cache: false
+          axiom-audit: true
+          axiom-audit-root: FFBBPLean
+      - name: Prevent placeholders and custom axioms
+        run: |
+          if grep -R -n -E '(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)|^[[:space:]]*axiom[[:space:]]' --include='*.lean' FFBBPLean FFBBPLean.lean; then
+            exit 1
+          fi

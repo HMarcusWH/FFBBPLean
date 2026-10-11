@@ -1,0 +1,42 @@
+name: B16 numerical research checks
+on:
+  push:
+    branches: [main, "research/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  b16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements.txt
+      - run: PYTHONPATH=. python -m pytest -q tests/
+      - name: Recompute frozen strong-coupling B16 conditional enclosure
+        run: PYTHONPATH=. python run_directed.py 18
+      - name: Verify declared numerical gates without upgrading proof status
+        run: |
+          python - <<'PY'
+          import json
+          from decimal import Decimal
+          from pathlib import Path
+          r=json.loads(Path('receipts/b16_decimal_directed_n18.json').read_text())
+          assert r['model_digest']=='7004149342c03dd395ed30a35775576553ff9c091c1f0fedb90e610e9a9aa885'
+          assert r['leaves']<=12000
+          assert Decimal(r['evidence_width'])<=Decimal('.001')
+          assert all(Decimal(x)<=1 for x in r['field_mean_widths'])
+          assert r['status']=='B16_CONDITIONAL_DIRECTED_DECIMAL_ENCLOSURE'
+          assert r['proof_status'].startswith('CONDITIONAL')
+          print('Conditional frozen numerical criteria PASS; formal proof remains OPEN')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: b16-conditional-frozen-receipt
+          path: receipts/b16_decimal_directed_n18.json
+          retention-days: 30

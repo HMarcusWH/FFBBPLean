@@ -1,0 +1,13 @@
+name = "FFBBPLean"
+version = "0.1.0"
+defaultTargets = ["FFBBPLean"]
+
+# Pinned independently-reviewed PermanssonLean library, itself pinned to
+# Lean 4.34.0 and mathlib v4.34.0. The historical FFBBP releases stay frozen.
+[[require]]
+name = "PermanssonLean"
+git = "https://github.com/HMarcusWH/PermanssonLean.git"
+rev = "821d8545ce0ef28466d4aba70c415db6953f5cef"
+
+[[lean_lib]]
+name = "FFBBPLean"
