@@ -1,0 +1,39 @@
+name: D24AP Lean 4.34 kernel proofs
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [research/d24ap-interval-formal-v434-20261022]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Reject axiom/sorry/admit and unsafe proof hooks
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -nE '(^|[^a-zA-Z])(sorry|admit|axiom)([^a-zA-Z]|$)' FFBBPLean/D24AP/Interval.lean; then
+            echo 'Unsupported proof placeholder in formal source' >&2
+            exit 1
+          fi
+          test "$(cat lean-toolchain)" = 'leanprover/lean4:v4.34.0'
+      - uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          test: false
+          lint: false
+          use-mathlib-cache: true
+          build: true
+          build-args: "--wfail"
+      - name: Kernel build confirmation
+        shell: bash
+        run: |
+          set -euo pipefail
+          lake build FFBBPLean --wfail
+          echo 'D24AP source compiled; C08/C06 source integrals remain unproved.'
