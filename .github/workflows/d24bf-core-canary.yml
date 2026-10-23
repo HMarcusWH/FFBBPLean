@@ -2,6 +2,8 @@ name: D24BF private Lean core canary
 on:
   push:
     branches: [research/d24bf-private-core-canary-20261023]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
