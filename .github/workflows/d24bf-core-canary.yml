@@ -8,7 +8,17 @@ on:
 permissions:
   contents: read
 jobs:
+  runner-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Zero-dependency runner control
+        shell: bash
+        run: |
+          echo RUNNER_CONTROL_STARTED=true
+          printf 'UTC=%s\n' "$(date -u +%FT%TZ)"
   lean-canary:
+    needs: [runner-only]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
