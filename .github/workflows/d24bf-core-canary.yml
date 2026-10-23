@@ -1,0 +1,54 @@
+name: D24BF private Lean core canary
+on:
+  push:
+    branches: [research/d24bf-private-core-canary-20261023]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  runner-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Zero-dependency runner control
+        shell: bash
+        run: |
+          echo RUNNER_CONTROL_STARTED=true
+          printf 'UTC=%s\n' "$(date -u +%FT%TZ)"
+  lean-canary:
+    needs: [runner-only]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Runner admission diagnostic
+        shell: bash
+        run: |
+          echo RUNNER_STARTED=true
+          uname -a
+      - name: Checkout isolated private branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Verify pin and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat lean-toolchain)" = 'leanprover/lean4:v4.34.0'
+          test -f FFBBPCore/D24BF/Canary.lean
+          echo SOURCE_PIN_CHECKED=true
+      - name: Install Lean 4.34 without Mathlib
+        uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9
+        with:
+          test: false
+          lint: false
+          use-mathlib-cache: false
+          build: false
+      - name: Check Lean kernel canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          lean --version
+          lake build FFBBPCore
+          echo KERNEL_CANARY_PASSED=true
